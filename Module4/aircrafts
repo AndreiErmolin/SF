@@ -1,0 +1,175 @@
+--4.1-----------------------------------------------
+
+select a.city,COUNT(a.airport_code)
+from dst_project.airports a
+group by a.city
+order by 2 desc
+
+--4.2-------------------------------------------------
+--1)
+select count(distinct f.status)
+from dst_project.flights f
+
+--2)
+select count(f.flight_id)
+from dst_project.flights f
+where f.status='Departed'
+
+--3)
+select count(distinct s.seat_no)
+from dst_project.seats s
+where s.aircraft_code='773'
+  
+--4)
+select count(flight_id)
+from dst_project.flights f
+where (scheduled_arrival between '2017-04-01'::date and '2017-09-01'::date) and f.status='Arrived'
+  
+  
+--4.3---------------------------------------------------
+--1)
+select count(f.flight_id)
+from dst_project.flights f 
+where f.status='Cancelled'
+
+--2)
+select 'boeing' aircraft ,count(a.model)
+       from dst_project.aircrafts a
+       where a.model like '%Boeing%' 
+union all
+select 'airbus' aircraft,count(a.model)
+       from dst_project.aircrafts a
+       where a.model like '%Airbus%' 
+union all
+select 'sukhoi' aircraft, count (a.model)
+       from dst_project.aircrafts a
+       where a.model like '%Sukhoi%'
+
+--3)
+
+select count(airport_code)
+ from 
+  dst_project.airports a
+  where timezone like '%Asia%'
+union all
+select count(airport_code)
+ from 
+  dst_project.airports a
+  where timezone like '%Europe%'
+  
+--4)
+
+select flight_id,f.actual_arrival-f.scheduled_arrival diff
+ from 
+  dst_project.flights f
+  where f.actual_arrival is not null
+order by 2 desc
+
+--4.4----------------------------------------------------------------
+--1)
+select flight_id,f.scheduled_departure
+ from 
+  dst_project.flights f
+order by 2
+
+--2)  
+
+select f.flight_id,(f.scheduled_arrival-f.scheduled_departure) segm
+ from 
+  dst_project.flights f
+  where f.scheduled_departure is not null and f.scheduled_arrival is not null
+ order by 2 desc
+ 
+--3)
+
+select f.flight_id,f.departure_airport,f.arrival_airport,(f.scheduled_arrival-f.scheduled_departure) flight_time
+ from 
+  dst_project.flights f
+  where f.scheduled_departure is not null and f.scheduled_arrival is not null
+  order by 4 desc
+
+--4)
+
+select avg(f.scheduled_arrival-f.scheduled_departure) flight_time
+ from 
+  dst_project.flights f
+  where f.scheduled_departure is not null and f.scheduled_arrival is not null
+  
+--4.5--------------------------------------------------------------------
+
+--1)
+   select fare_conditions,count(aircraft_code)
+from dst_project.seats s 
+     where aircraft_code='SU9'
+     group by 1
+
+--2)
+
+   select *
+   from dst_project.bookings b
+   order by 3
+
+--3)
+select *
+from dst_project.tickets t
+     join dst_project.boarding_passes bp on t.ticket_no=bp.ticket_no
+     where t.passenger_id='4313 788533'
+     
+--5.1------------------------------------------------------------------------
+--1)
+select count(f.flight_id)
+from dst_project.flights f
+ where (f.actual_arrival between '2017-01-01'::date and '2017-12-31'::date ) and f.arrival_airport='AAQ' --and f.status='Arrived'
+ 
+ --2)
+select count(flight_id)
+from dst_project.flights f
+ where ((f.actual_departure between '2017-01-01'::date and '2017-03-01'::date ) or
+        (f.actual_departure between '2017-11-30'::date and '2018-01-01'::date ))
+         and f.departure_airport='AAQ' and f.status not in ('Canselled')
+         
+--3)
+
+select count(flight_id)
+from dst_project.flights f
+ where 
+        f.departure_airport='AAQ' and f.status='Cancelled'
+        
+--4)
+
+select count(distinct flight_id)
+from dst_project.flights f
+ where 
+        f.departure_airport='AAQ' and f.arrival_airport not in ('SVO','VKO','DME')
+        
+--5)
+
+select a.model,count(s.seat_no)
+from dst_project.flights f
+     join dst_project.seats s on s.aircraft_code=f.aircraft_code
+     join dst_project.aircrafts a on a.aircraft_code=f.aircraft_code
+     where f.departure_airport='AAQ'
+group by a.model
+        
+        
+--general query for project
+
+select f.flight_id,f.departure_airport,f.arrival_airport,a.model,f.actual_departure,f.actual_arrival, dai.city departure_city,ai.city arrival_city,dai.longitude departure_longitude,
+dai.latitude departure_latitude,ai.longitude arrival_longitude,ai.latitude arrival_latitude,gr_tf.sum_amount ,gr_tf.tickets_sell
+from dst_project.flights f 
+       join dst_project.aircrafts a on f.aircraft_code=a.aircraft_code
+       
+         join dst_project.airports ai on f.arrival_airport=ai.airport_code
+         join dst_project.airports dai on f.departure_airport=dai.airport_code
+         left join (select tf.flight_id,sum(tf.amount) sum_amount,count(tf.ticket_no) tickets_sell
+               from dst_project.ticket_flights tf 
+               group by tf.flight_id) gr_tf on f.flight_id=gr_tf.flight_id
+ where ((f.actual_departure between '2017-01-01'::date and '2017-03-01'::date ) or
+        (f.actual_departure between '2017-11-30'::date and '2018-01-01'::date ))
+         and f.departure_airport='AAQ' and f.status not in ('Canselled')
+
+ 
+ 
+
+
+
